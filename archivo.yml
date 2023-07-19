@@ -1,0 +1,20 @@
+# .readthedocs.yml
+
+# Versión del generador de documentación
+version: 2
+
+# Opciones para la construcción de documentación
+sphinx:
+  configuration: docs/conf.py
+
+# Opciones de construcción adicionales, si es necesario
+# build:
+#   image: latest
+
+# Opciones de compilación para diferentes lenguajes o versiones, si es necesario
+# python:
+#   version: 3.8
+
+# Dependencias necesarias para ejecutar el código
+requirements_file: requirements.txt
+
