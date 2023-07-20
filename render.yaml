@@ -1,53 +1,13 @@
-
----
-
-# dashboard-app-deployment.yaml
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dashboard-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: dashboard-app
-  template:
-    metadata:
-      labels:
-        app: dashboard-app
-    spec:
-      containers:
-        - name: dashboard-app
-          image: tu_usuario/tu_imagen:latest
-          ports:
-            - containerPort: 8050
-          volumeMounts:  # Montamos el ConfigMap como un volumen en el contenedor
-            - name: requirements-volume
-              mountPath: /app/requirements.txt
-              subPath: requirements.txt
-      volumes:
-        - name: requirements-volume
-          configMap:
-            name: dashboard-app-configmap
-            items:
-              - key: requirements.txt
-                path: requirements.txt
-
----
-
-# dashboard-app-service.yaml
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: dashboard-app-service
-spec:
-  selector:
-    app: dashboard-app
-  ports:
-    - protocol: TCP
-      port: 80  # Puerto del servicio expuesto en el clúster
-      targetPort: 8050  # Puerto al que el servicio redirige el tráfico
-  type: LoadBalancer  # Tipo de servicio LoadBalancer para exponer la aplicación al exterior (requiere proveedor de Kubernetes con soporte para LoadBalancer)
-
+services:
+  # See https://render.com/docs/blueprint-spec for more info on render blueprints
+  - type: web
+    name: dot-offering-stair-hiqu
+    env: python
+    plan: free
+    # A requirements.txt file must exist
+    buildCommand: pip install -r requirements.txt
+    # A src/app.py file must exist and contain `server=app.server`
+    startCommand: gunicorn --chdir src app:server
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0

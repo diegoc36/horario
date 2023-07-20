@@ -99,7 +99,7 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
 
 
 app = dash.Dash(__name__)
-
+server=app.server
 df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func([])
 n_clicks=0
 app.layout = html.Div([
