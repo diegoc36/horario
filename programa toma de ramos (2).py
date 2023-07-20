@@ -165,6 +165,6 @@ def dashboard():
     return app
 
 app = dashboard()
-app.run_server(debug=True, port=10)
+app.run_server()
 
 
