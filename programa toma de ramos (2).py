@@ -10,98 +10,95 @@ from dash import dcc, html, dash_table
 from librerias import obtener_opciones_curso,horario_func
 
 
+def generate_curso_content(i):
+    curso_content = html.Div([
+        html.H2(f'Curso {i+1}'),
+        html.Label('Nombre del Curso:'),
+        dcc.Dropdown(
+            id={'type': 'curso-dropdown', 'index': i},
+            options=obtener_opciones_curso(),
+            placeholder='Selecciona un curso',
+            value=None,  # Valor inicial del dropdown
+            persistence=True,  # Mantener el valor seleccionado después de actualizaciones
+            persistence_type='memory'  # Tipo de persistencia en memoria
+        ),
 
-
-def dashboard():
-    app = dash.Dash(__name__, prevent_initial_callbacks=True, suppress_callback_exceptions=True)
+        html.Div(
+            id={'type': 'horario-container', 'index': i},
+            children=[],
+        )
+    ])
+    return curso_content
     
+def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
     
-    def generate_curso_content(i):
-        curso_content = html.Div([
-            html.H2(f'Curso {i+1}'),
-            html.Label('Nombre del Curso:'),
-            dcc.Dropdown(
-                id={'type': 'curso-dropdown', 'index': i},
-                options=obtener_opciones_curso(),
-                placeholder='Selecciona un curso',
-                value=None,  # Valor inicial del dropdown
-                persistence=True,  # Mantener el valor seleccionado después de actualizaciones
-                persistence_type='memory'  # Tipo de persistencia en memoria
-            ),
 
-            html.Div(
-                id={'type': 'horario-container', 'index': i},
-                children=[],
-            )
-        ])
-        return curso_content
-    
-    def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
-        
-
-        colores_curso = [
-    '#FF5733',  # Rojo
-    '#33FF57',  # Verde claro
-    '#5733FF',  # Azul
-    '#FF33B7',  # Rosa
-    '#33B7FF',  # Azul claro
-    '#7F3300',  # Marrón oscuro
-    '#FFA500',  # Naranja
-    '#A52A2A',  # Marrón
-    '#00CED1',  # Turquesa
-    '#8A2BE2'   # Azul violeta
+    colores_curso = [
+'#FF5733',  # Rojo
+'#33FF57',  # Verde claro
+'#5733FF',  # Azul
+'#FF33B7',  # Rosa
+'#33B7FF',  # Azul claro
+'#7F3300',  # Marrón oscuro
+'#FFA500',  # Naranja
+'#A52A2A',  # Marrón
+'#00CED1',  # Turquesa
+'#8A2BE2'   # Azul violeta
 ]
-        columnas= df_combined.columns
-        horario_div = html.Div([
-            html.H3('Horario de Clases'),
-            dash_table.DataTable(
-                id={'type': 'horario-graph', 'index': n_clicks or 0},
-                columns=[{'name': col, 'id': col} for col in columnas],
-                data=df_combined.to_dict('records'),
-                style_data_conditional=[
-
-                    {
-                    'if': {
-                        'filter_query': '{{{0}}} = "{1}"'.format(col,curso[0]),
-                        'column_id': col
-                        },
-                    'backgroundColor': colores_curso[i % len(colores_curso)],
-                    'color': 'white'
-                } for i, curso in enumerate(tit_curso) for col in columnas 
-            ]+[
-                {
-                    'if': {
-                        'column_id': 'Horas',
-                    },
-                    'backgroundColor': '#CCCCCC', 
-                    'color': 'bold'
-                },
-            ]+[
+    columnas= df_combined.columns
+    horario_div = html.Div([
+        html.H3('Horario de Clases'),
+        dash_table.DataTable(
+            id={'type': 'horario-graph', 'index': n_clicks or 0},
+            columns=[{'name': col, 'id': col} for col in columnas],
+            data=df_combined.to_dict('records'),
+            style_data_conditional=[
 
                 {
                 'if': {
-                    'filter_query': '{{{0}}} = "{1}"'.format(col,'TOPE'),
+                    'filter_query': '{{{0}}} = "{1}"'.format(col,curso[0]),
                     'column_id': col
                     },
-                'backgroundColor': 'rgb(0, 0, 0)' ,
+                'backgroundColor': colores_curso[i % len(colores_curso)],
                 'color': 'white'
-            } for col in columnas if len(hora_tras)
-        ],
-            style_header={
-                'backgroundColor': 'orange',
-                'fontWeight': 'bold'
+            } for i, curso in enumerate(tit_curso) for col in columnas 
+        ]+[
+            {
+                'if': {
+                    'column_id': 'Horas',
+                },
+                'backgroundColor': '#CCCCCC', 
+                'color': 'bold'
             },
-            style_cell={
-                'textAlign': 'center'
-            },
-            style_table={
-                'margin': {'l': 10, 'r': 10, 't': 30, 'b': 2},
-                'border': '1px solid black'
-            },
-        ),
+        ]+[
 
-    ])
-        return horario_div
+            {
+            'if': {
+                'filter_query': '{{{0}}} = "{1}"'.format(col,'TOPE'),
+                'column_id': col
+                },
+            'backgroundColor': 'rgb(0, 0, 0)' ,
+            'color': 'white'
+        } for col in columnas if len(hora_tras)
+    ],
+        style_header={
+            'backgroundColor': 'orange',
+            'fontWeight': 'bold'
+        },
+        style_cell={
+            'textAlign': 'center'
+        },
+        style_table={
+            'margin': {'l': 10, 'r': 10, 't': 30, 'b': 2},
+            'border': '1px solid black'
+        },
+    ),
+
+])
+    return horario_div
+
+def dashboard():
+    app = dash.Dash(__name__,server=True)
     
     df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func([])
     n_clicks=0
