@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 20 09:37:19 2023
+Created on Mon Jul 17 02:06:47 2023
 
 @author: diego
 """
 
+import dash
+from dash import dcc, html, dash_table
 from datetime import datetime, timedelta
 import pandas as pd
 
-def clase_prueba( NRC):
+def clase_prueba(csv, NRC):
     clases = csv.loc[(csv['NRC'] == NRC) & ((csv['TIPO'] == 'CLAS') | (csv['TIPO'] == 'AYUD') | (csv['TIPO'] == 'CLSS')), ('TIPO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES')]
 
     pruebas = csv.loc[ (csv['NRC'] == NRC) & ((csv['TIPO'] != 'CLAS') & (csv['TIPO'] != 'AYUD') & (csv['TIPO'] != 'CLSS')), ('TITULO', 'TIPO', 'INICIO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES')]
@@ -53,7 +55,7 @@ def hora(horario):
     df_combined = df_combined.drop(range(11, df_combined.shape[0])).set_index('index')
     return df_combined
 
-def obtener_opciones_curso():
+def obtener_opciones_curso(csv):
     cursos = csv[['NRC','TITULO','PROFESOR','PLAN DE ESTUDIOS']].drop_duplicates(subset='NRC').values
     opciones = [{'label': '{} {} {} {} '.format(curso[0],curso[1],curso[2],curso[3]), 'value': curso[0]} for curso in cursos]
     return opciones
@@ -107,42 +109,200 @@ def tiene_traslapes(horario):
         horas_por_dia[dia] = horarios_minutos
 
     return hora_tras,traslape
-def horario_func(selected_cursos):
-        horario = {
-            'LUNES': [],
-            'MARTES': [],
-            'MIERCOLES': [],
-            'JUEVES': [],
-            'VIERNES': []
-        }
-        tod_prueba = pd.DataFrame(columns=['TITULO', 'TIPO', 'INICIO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'])
-        tit_curso=[]
-        for curso in selected_cursos:
-            if curso==None:
-                continue
-            nrc = curso
-            titulo = csv.loc[csv['NRC'] == nrc, 'TITULO'].drop_duplicates().values
-            tit_curso.append(titulo)
-            clases, pruebas = clase_prueba(nrc)
-            tod_prueba = pd.concat([tod_prueba, pruebas])
-            for i, dia in enumerate(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']):
-                for a in clases.values.tolist():
-                    if a[0] == 'AYUD':
-                        horario[dia].append([a[i + 1], f'{titulo[0]}({a[0]})'])
-                    else:
-                        horario[dia].append([a[i + 1], titulo[0]])
-        
-        
-        hora_tras , traslape = tiene_traslapes(horario)
-        if len(hora_tras)>0:
-            for i in hora_tras:
-                horario[i[0]].append(['{} - {}'.format(i[1],i[2]),'TOPE'])
-                
-        df_combined = hora(horario)
-        df_combined = df_combined.rename_axis('Horas').reset_index().fillna('')
-        
-        tod_prueba = tod_prueba.fillna('')
-        
-        return df_combined, tod_prueba, hora_tras , traslape, tit_curso
-    
+def horario_func(csv, selected_cursos):
+    horario = {
+        'LUNES': [],
+        'MARTES': [],
+        'MIERCOLES': [],
+        'JUEVES': [],
+        'VIERNES': []
+    }
+    tit_curso = []
+    dfs_clases = []  # Lista para almacenar DataFrames de clases de cada curso
+    dfs_pruebas = []  # Lista para almacenar DataFrames de pruebas de cada curso
+
+    for curso in selected_cursos:
+        if curso is None:
+            continue
+        nrc = curso
+        titulo = csv.loc[csv['NRC'] == nrc, 'TITULO'].drop_duplicates().values
+        tit_curso.append(titulo)
+        clases, pruebas = clase_prueba(csv, nrc)
+        dfs_clases.append(clases)
+        dfs_pruebas.append(pruebas)
+        for i, dia in enumerate(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']):
+            for a in clases.values.tolist():
+                if a[0] == 'AYUD':
+                    horario[dia].append([a[i + 1], f'{titulo[0]}({a[0]})'])
+                else:
+                    horario[dia].append([a[i + 1], titulo[0]])
+
+    tod_prueba = pd.concat(dfs_pruebas)  # Unir todos los DataFrames de pruebas
+    df_combined = hora(horario)
+
+    hora_tras, traslape = tiene_traslapes(horario)
+    if len(hora_tras) > 0:
+        for i in hora_tras:
+            horario[i[0]].append(['{} - {}'.format(i[1], i[2]), 'TOPE'])
+
+    df_combined = df_combined.rename_axis('Horas').reset_index().fillna('')
+
+    return df_combined, tod_prueba, hora_tras, traslape, tit_curso
+
 csv = pd.read_excel('Horario ING_202320.xlsx', skiprows=10, header=1)
+
+def generate_curso_content(csv,i):
+    curso_content = html.Div([
+        html.H2(f'Curso {i+1}'),
+        html.Label('Nombre del Curso:'),
+        dcc.Dropdown(
+            id={'type': 'curso-dropdown', 'index': i},
+            options=obtener_opciones_curso(csv),
+            placeholder='Selecciona un curso',
+            value=None,  # Valor inicial del dropdown
+            persistence=True,  # Mantener el valor seleccionado después de actualizaciones
+            persistence_type='memory'  # Tipo de persistencia en memoria
+        ),
+
+        html.Div(
+            id={'type': 'horario-container', 'index': i},
+            children=[],
+        )
+    ])
+    return curso_content
+    
+def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
+    
+
+    colores_curso = [
+'#FF5733',  # Rojo
+'#33FF57',  # Verde claro
+'#5733FF',  # Azul
+'#FF33B7',  # Rosa
+'#33B7FF',  # Azul claro
+'#7F3300',  # Marrón oscuro
+'#FFA500',  # Naranja
+'#A52A2A',  # Marrón
+'#00CED1',  # Turquesa
+'#8A2BE2'   # Azul violeta
+]
+    columnas= df_combined.columns
+    horario_div = html.Div([
+        html.H3('Horario de Clases'),
+        dash_table.DataTable(
+            id={'type': 'horario-graph', 'index': n_clicks or 0},
+            columns=[{'name': col, 'id': col} for col in columnas],
+            data=df_combined.to_dict('records'),
+            style_data_conditional=[
+
+                {
+                'if': {
+                    'filter_query': '{{{0}}} = "{1}"'.format(col,curso[0]),
+                    'column_id': col
+                    },
+                'backgroundColor': colores_curso[i % len(colores_curso)],
+                'color': 'white'
+            } for i, curso in enumerate(tit_curso) for col in columnas 
+        ]+[
+            {
+                'if': {
+                    'column_id': 'Horas',
+                },
+                'backgroundColor': '#CCCCCC', 
+                'color': 'bold'
+            },
+        ]+[
+
+            {
+            'if': {
+                'filter_query': '{{{0}}} = "{1}"'.format(col,'TOPE'),
+                'column_id': col
+                },
+            'backgroundColor': 'rgb(0, 0, 0)' ,
+            'color': 'white'
+        } for col in columnas if len(hora_tras)
+    ],
+        style_header={
+            'backgroundColor': 'orange',
+            'fontWeight': 'bold'
+        },
+        style_cell={
+            'textAlign': 'center'
+        },
+        style_table={
+            'margin': {'l': 10, 'r': 10, 't': 30, 'b': 2},
+            'border': '1px solid black'
+        },
+    ),
+
+])
+    return horario_div
+
+
+app = dash.Dash(__name__)
+server=app.server
+n_clicks=0
+app.layout = html.Div([
+    html.H1('Horario de la universidad'),
+
+    html.Label('Número de Cursos:'),
+    dcc.Input(id='num-cursos', type='number', min=1, max=10, step=1, value=1),
+    html.Button('Actualizar', id='actualizar-button'),
+    
+    html.Div(id='cursos-container'),
+    
+    dcc.Store(id='selected-cursos-store', data=[]),
+    
+    html.Div(id='horario-container')
+    
+    ])
+
+
+
+@app.callback(
+    
+    [
+        dash.dependencies.Output('cursos-container', 'children'),
+        dash.dependencies.Output('selected-cursos-store', 'data'),
+        dash.dependencies.Output('horario-container', 'children')
+    ],
+    [
+        dash.dependencies.Input('actualizar-button', 'n_clicks'),
+        dash.dependencies.Input({'type': 'curso-dropdown', 'index': dash.dependencies.ALL}, 'value')
+    ],
+    [
+        dash.dependencies.State('num-cursos', 'value')
+    ]
+)
+def update_cursos(n_clicks, selected_values, num_cursos):
+    cursos_inputs = []
+    for i in range(num_cursos):
+        cursos_inputs.append(generate_curso_content(csv,i))
+
+    selected_cursos = selected_values[:num_cursos] if selected_values else []
+    
+    df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func(csv,selected_cursos)
+    
+    horario_div=horario_dash(n_clicks, df_combined, hora_tras, tit_curso)
+    
+  
+    lista_traslape = html.Div([
+        html.H3('Tiene Tope', style={'font-size': '40px', 'color': 'red'}),
+        html.Ul([
+            html.Li(f'{i}', style={'font-size': '30px', 'color': 'red'}) for i in traslape
+            ])
+    ])if len(traslape) > 0 else html.Div()
+    
+    lista_pruebas_div = html.Div([
+        html.H3('Lista de Pruebas'),
+        html.Ul([
+            html.Li(f'{titulo} - {tipo} - {inicio}') for titulo, tipo, inicio, *_ in tod_prueba.values.tolist()
+            ])
+    ])
+    horario_inicio_style = {'display': 'none'} if n_clicks == 0 else {}
+    return cursos_inputs, selected_cursos, [horario_div,lista_traslape,lista_pruebas_div,horario_inicio_style]
+
+
+app.run_server(debug=True, port=8888)
+
+
