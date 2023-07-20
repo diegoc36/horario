@@ -99,7 +99,7 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
 
 
 app = dash.Dash(__name__)
-server = app.server
+
 df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func([])
 n_clicks=0
 app.layout = html.Div([
@@ -109,11 +109,11 @@ app.layout = html.Div([
     dcc.Input(id='num-cursos', type='number', min=1, max=10, step=1, value=1),
     html.Button('Actualizar', id='actualizar-button'),
     
-    html.Div(generate_curso_content(0),id='cursos-container'),
+    html.Div(id='cursos-container'),
     
     dcc.Store(id='selected-cursos-store', data=[]),
     
-    html.Div(horario_dash(n_clicks, df_combined, hora_tras, tit_curso),id='horario-container')
+    html.Div(id='horario-container')
     
     ])
 
