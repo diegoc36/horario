@@ -150,7 +150,7 @@ def horario_func(selected_cursos):
 
 def dashboard():
     app = dash.Dash(__name__, prevent_initial_callbacks=True, suppress_callback_exceptions=True)
-    server = app.server
+    
     
     def generate_curso_content(i):
         curso_content = html.Div([
