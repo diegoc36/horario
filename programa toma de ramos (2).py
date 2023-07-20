@@ -97,74 +97,72 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
 ])
     return horario_div
 
-def dashboard():
-    app = dash.Dash(__name__,server=True)
+
+app = dash.Dash(__name__)
+server = app.server
+df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func([])
+n_clicks=0
+app.layout = html.Div([
+    html.H1('Horario de la universidad'),
+
+    html.Label('Número de Cursos:'),
+    dcc.Input(id='num-cursos', type='number', min=1, max=10, step=1, value=1),
+    html.Button('Actualizar', id='actualizar-button'),
     
-    df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func([])
-    n_clicks=0
-    app.layout = html.Div([
-        html.H1('Horario de la universidad'),
-
-        html.Label('Número de Cursos:'),
-        dcc.Input(id='num-cursos', type='number', min=1, max=10, step=1, value=1),
-        html.Button('Actualizar', id='actualizar-button'),
-        
-        html.Div(generate_curso_content(0),id='cursos-container'),
-        
-        dcc.Store(id='selected-cursos-store', data=[]),
-        
-        html.Div(horario_dash(n_clicks, df_combined, hora_tras, tit_curso),id='horario-container')
-        
-        ])
+    html.Div(generate_curso_content(0),id='cursos-container'),
     
+    dcc.Store(id='selected-cursos-store', data=[]),
     
+    html.Div(horario_dash(n_clicks, df_combined, hora_tras, tit_curso),id='horario-container')
+    
+    ])
 
-    @app.callback(
-        
-        [
-            dash.dependencies.Output('cursos-container', 'children'),
-            dash.dependencies.Output('selected-cursos-store', 'data'),
-            dash.dependencies.Output('horario-container', 'children')
-        ],
-        [
-            dash.dependencies.Input('actualizar-button', 'n_clicks'),
-            dash.dependencies.Input({'type': 'curso-dropdown', 'index': dash.dependencies.ALL}, 'value')
-        ],
-        [
-            dash.dependencies.State('num-cursos', 'value')
-        ]
-    )
-    def update_cursos(n_clicks, selected_values, num_cursos):
-        cursos_inputs = []
-        for i in range(num_cursos):
-            cursos_inputs.append(generate_curso_content(i))
 
-        selected_cursos = selected_values[:num_cursos] if selected_values else []
-        
-        df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func(selected_cursos)
-        
-        horario_div=horario_dash(n_clicks, df_combined, hora_tras, tit_curso)
-        
-      
-        lista_traslape = html.Div([
-            html.H3('Tiene Tope', style={'font-size': '40px', 'color': 'red'}),
-            html.Ul([
-                html.Li(f'{i}', style={'font-size': '30px', 'color': 'red'}) for i in traslape
-                ])
-        ])if len(traslape) > 0 else html.Div()
-        
-        lista_pruebas_div = html.Div([
-            html.H3('Lista de Pruebas'),
-            html.Ul([
-                html.Li(f'{titulo} - {tipo} - {inicio}') for titulo, tipo, inicio, *_ in tod_prueba.values.tolist()
-                ])
-        ])
-        horario_inicio_style = {'display': 'none'} if n_clicks == 0 else {}
-        return cursos_inputs, selected_cursos, [horario_div,lista_traslape,lista_pruebas_div,horario_inicio_style]
 
-    return app
+@app.callback(
+    
+    [
+        dash.dependencies.Output('cursos-container', 'children'),
+        dash.dependencies.Output('selected-cursos-store', 'data'),
+        dash.dependencies.Output('horario-container', 'children')
+    ],
+    [
+        dash.dependencies.Input('actualizar-button', 'n_clicks'),
+        dash.dependencies.Input({'type': 'curso-dropdown', 'index': dash.dependencies.ALL}, 'value')
+    ],
+    [
+        dash.dependencies.State('num-cursos', 'value')
+    ]
+)
+def update_cursos(n_clicks, selected_values, num_cursos):
+    cursos_inputs = []
+    for i in range(num_cursos):
+        cursos_inputs.append(generate_curso_content(i))
 
-app = dashboard()
-app.run_server()
+    selected_cursos = selected_values[:num_cursos] if selected_values else []
+    
+    df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func(selected_cursos)
+    
+    horario_div=horario_dash(n_clicks, df_combined, hora_tras, tit_curso)
+    
+  
+    lista_traslape = html.Div([
+        html.H3('Tiene Tope', style={'font-size': '40px', 'color': 'red'}),
+        html.Ul([
+            html.Li(f'{i}', style={'font-size': '30px', 'color': 'red'}) for i in traslape
+            ])
+    ])if len(traslape) > 0 else html.Div()
+    
+    lista_pruebas_div = html.Div([
+        html.H3('Lista de Pruebas'),
+        html.Ul([
+            html.Li(f'{titulo} - {tipo} - {inicio}') for titulo, tipo, inicio, *_ in tod_prueba.values.tolist()
+            ])
+    ])
+    horario_inicio_style = {'display': 'none'} if n_clicks == 0 else {}
+    return cursos_inputs, selected_cursos, [horario_div,lista_traslape,lista_pruebas_div,horario_inicio_style]
+
+
+app.run_server(debug=True, port=8888)
 
 
