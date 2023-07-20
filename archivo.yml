@@ -4,17 +4,47 @@
 version: 2
 
 # Opciones para la construcción de documentación
-sphinx:
-  configuration: docs/conf.py
+# sphinx:
+#   configuration: docs/conf.py
 
 # Opciones de construcción adicionales, si es necesario
 # build:
 #   image: latest
 
-# Opciones de compilación para diferentes lenguajes o versiones, si es necesario
-# python:
-#   version: 3.8
+Opciones de compilación para diferentes lenguajes o versiones, si es necesario
+python:
+  version: 3.8
+  install:
+  
+      - method: pip
+          path: code
+      - requeriment: requirements.txt
 
-# Dependencias necesarias para ejecutar el código
-requirements_file: requirements.txt
 
+site_name: DASH
+site_url: http://dash-project.org/
+site_description: Project documentation of DASH
+site_author: DASH-Team
+
+repo_url: https://github.com/dash-project/dash/
+
+extra_javascript: 
+    - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+    - config/mathjaxhelper.js
+
+markdown_extensions:
+    - toc:
+        permalink: True
+    - admonition:
+    - extra:
+
+theme: readthedocs
+
+pages:
+  - Home: index.md
+  - Container:
+    - NArray: Containers/NArray.md
+  - Input Output:
+    - HDF5 Driver: InputOutput/HDF5.md
+  - Atomic Operations: Atomic.md
+  - Continuous Integration: CI.md
