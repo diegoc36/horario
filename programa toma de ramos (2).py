@@ -10,7 +10,7 @@ from dash import dcc, html, dash_table
 from datetime import datetime, timedelta
 import pandas as pd
 
-def clase_prueba( NRC):
+def clase_prueba(csv, NRC):
     clases = csv.loc[(csv['NRC'] == NRC) & ((csv['TIPO'] == 'CLAS') | (csv['TIPO'] == 'AYUD') | (csv['TIPO'] == 'CLSS')), ('TIPO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES')]
 
     pruebas = csv.loc[ (csv['NRC'] == NRC) & ((csv['TIPO'] != 'CLAS') & (csv['TIPO'] != 'AYUD') & (csv['TIPO'] != 'CLSS')), ('TITULO', 'TIPO', 'INICIO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES')]
@@ -55,7 +55,7 @@ def hora(horario):
     df_combined = df_combined.drop(range(11, df_combined.shape[0])).set_index('index')
     return df_combined
 
-def obtener_opciones_curso():
+def obtener_opciones_curso(csv):
     cursos = csv[['NRC','TITULO','PROFESOR','PLAN DE ESTUDIOS']].drop_duplicates(subset='NRC').values
     opciones = [{'label': '{} {} {} {} '.format(curso[0],curso[1],curso[2],curso[3]), 'value': curso[0]} for curso in cursos]
     return opciones
@@ -109,7 +109,7 @@ def tiene_traslapes(horario):
         horas_por_dia[dia] = horarios_minutos
 
     return hora_tras,traslape
-def horario_func(selected_cursos):
+def horario_func(csv,selected_cursos):
         horario = {
             'LUNES': [],
             'MARTES': [],
@@ -125,7 +125,7 @@ def horario_func(selected_cursos):
             nrc = curso
             titulo = csv.loc[csv['NRC'] == nrc, 'TITULO'].drop_duplicates().values
             tit_curso.append(titulo)
-            clases, pruebas = clase_prueba(nrc)
+            clases, pruebas = clase_prueba(csv,nrc)
             tod_prueba = pd.concat([tod_prueba, pruebas])
             for i, dia in enumerate(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']):
                 for a in clases.values.tolist():
@@ -155,7 +155,7 @@ def generate_curso_content(i):
         html.Label('Nombre del Curso:'),
         dcc.Dropdown(
             id={'type': 'curso-dropdown', 'index': i},
-            options=obtener_opciones_curso(),
+            options=obtener_opciones_curso(csv),
             placeholder='Selecciona un curso',
             value=None,  # Valor inicial del dropdown
             persistence=True,  # Mantener el valor seleccionado después de actualizaciones
@@ -239,7 +239,7 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
 
 app = dash.Dash(__name__)
 server=app.server
-df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func([])
+
 n_clicks=0
 app.layout = html.Div([
     html.H1('Horario de la universidad'),
@@ -280,7 +280,7 @@ def update_cursos(n_clicks, selected_values, num_cursos):
 
     selected_cursos = selected_values[:num_cursos] if selected_values else []
     
-    df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func(selected_cursos)
+    df_combined, tod_prueba, hora_tras, traslape, tit_curso = horario_func(csv,selected_cursos)
     
     horario_div=horario_dash(n_clicks, df_combined, hora_tras, tit_curso)
     
