@@ -173,7 +173,7 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
     
 
     colores_curso = [
-'#FF5733',  # Rojo
+'#51E5FF',  # Rojo
 '#33FF57',  # Verde claro
 '#5733FF',  # Azul
 '#FF33B7',  # Rosa
