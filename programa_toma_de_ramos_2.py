@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 17 02:06:47 2023
+Created on Sun Jul 30 21:29:19 2023
 
 @author: diego
 """
-
 import dash
-from dash import dcc, html, dash_table
+from dash import dash_table
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
 from datetime import datetime, timedelta
 import pandas as pd
 
@@ -173,7 +175,7 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
     
 
     colores_curso = [
-'#51E5FF',  # Rojo
+'#FF5733',  # Rojo
 '#33FF57',  # Verde claro
 '#5733FF',  # Azul
 '#FF33B7',  # Rosa
@@ -236,11 +238,9 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
 ])
     return horario_div
 
-
 app = dash.Dash(__name__)
 server=app.server
-
-n_clicks=0
+_clicks=0
 app.layout = html.Div([
     html.H1('Horario de la universidad'),
 
@@ -302,6 +302,5 @@ def update_cursos(n_clicks, selected_values, num_cursos):
     return cursos_inputs, selected_cursos, [horario_div,lista_traslape,lista_pruebas_div,horario_inicio_style]
 
 
-app.run_server(debug=True, port=8888)
-
-
+if __name__ == '__main__':
+    app.run_server(debug=True, port=5)
