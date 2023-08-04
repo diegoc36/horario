@@ -5,15 +5,12 @@ Created on Sun Jul 30 21:29:19 2023
 @author: diego
 """
 import dash
-from dash import dash_table
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash import dash_table, html, dcc
 from datetime import datetime, timedelta
 import pandas as pd
 
 def clase_prueba(csv, NRC):
-    clases = csv.loc[(csv['NRC'] == NRC) & ((csv['TIPO'] == 'CLAS') | (csv['TIPO'] == 'AYUD') | (csv['TIPO'] == 'CLSS')), ('TIPO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES')]
+    clases = csv.loc[(csv['NRC'] == NRC) & ((csv['TIPO'] == 'CLAS') | (csv['TIPO'] == 'AYUD') | (csv['TIPO'] == 'CLSS') | (csv['TIPO'] == 'LABT')), ('TIPO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES')]
 
     pruebas = csv.loc[ (csv['NRC'] == NRC) & ((csv['TIPO'] != 'CLAS') & (csv['TIPO'] != 'AYUD') & (csv['TIPO'] != 'CLSS')), ('TITULO', 'TIPO', 'INICIO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES')]
 
@@ -132,6 +129,8 @@ def horario_func(csv,selected_cursos):
             for i, dia in enumerate(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']):
                 for a in clases.values.tolist():
                     if a[0] == 'AYUD':
+                        horario[dia].append([a[i + 1], f'{titulo[0]}({a[0]})'])
+                    elif a[0] == 'LABT':
                         horario[dia].append([a[i + 1], f'{titulo[0]}({a[0]})'])
                     else:
                         horario[dia].append([a[i + 1], titulo[0]])
