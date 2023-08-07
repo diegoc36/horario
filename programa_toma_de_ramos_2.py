@@ -17,15 +17,15 @@ def clase_prueba(csv, NRC):
     return clases, pruebas
 
 def hora(horario):
-    inicio = datetime.strptime('8:30', '%H:%M')  # Hora inicial
-    fin = datetime.strptime('19:20', '%H:%M')  # Hora final
+    inicio = datetime.strptime('8:30', '%H:%M')  
+    fin = datetime.strptime('19:20', '%H:%M')  
 
     horas = []
     actual = inicio
     while actual <= fin:
         horas.append(actual.time())
         if actual.minute == 30:
-            actual += timedelta(minutes=60)  # Incremento de 50 minutos
+            actual += timedelta(minutes=60)  
 
     rango_horas = pd.Index(horas)
 
@@ -43,9 +43,9 @@ def hora(horario):
         for i, hora_clase in enumerate(horas_clase):
             hora = str(hora_clase[0])
             if hora != 'nan':
-                duracion = datetime.strptime(hora.split(' - ')[1], '%H:%M') - datetime.strptime(hora.split(' - ')[0], '%H:%M')
+                duracion = datetime.strptime(hora.split('-')[1].replace(" ", ""), '%H:%M') - datetime.strptime(hora.split('-')[0].replace(" ", ""), '%H:%M')
                 intervalos = int(duracion.total_seconds() / 600)  # Cálculo de los intervalos de 10 minutos
-                hora_inicio = datetime.strptime(hora.split(' - ')[0], '%H:%M')
+                hora_inicio = datetime.strptime(hora.split('-')[0].replace(" ", ""), '%H:%M')
                 for intervalo in range(intervalos):
                     hora_actual = hora_inicio + timedelta(minutes=10 * intervalo)
                     df_combined.at[hora_actual.time(), dia] = hora_clase[1]
@@ -87,8 +87,8 @@ def tiene_traslapes(horario):
         for hora, asignatura in horarios_del_dia:
             # Solo procesamos horarios válidos (ignoramos los valores 'nan')
             if hora and isinstance(hora, str):
-                inicio, fin = hora.split(' - ')
-                horarios_minutos.append((a_minutos(inicio), a_minutos(fin)))
+                inicio, fin = hora.split('-')
+                horarios_minutos.append((a_minutos(inicio.replace(" ", "")), a_minutos(fin.replace(" ", ""))))
             else:
                 horarios_minutos.append((0, 0))
         
@@ -148,7 +148,7 @@ def horario_func(csv,selected_cursos):
         
         return df_combined, tod_prueba, hora_tras , traslape, tit_curso
     
-csv = pd.read_excel('Horario ING_202320.xlsx', skiprows=10, header=1)
+csv = pd.read_excel('Horario ING_202320 con salas.xlsx', skiprows=10, header=1)
 
 def generate_curso_content(i):
     curso_content = html.Div([
@@ -199,7 +199,7 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
                     'filter_query': '{{{0}}} = "{1}"'.format(col,curso[0]),
                     'column_id': col
                     },
-                'backgroundColor': colores_curso[i % len(colores_curso)],
+                'backgroundColor': colores_curso[i],
                 'color': 'white'
             } for i, curso in enumerate(tit_curso) for col in columnas 
         ]+[
@@ -211,7 +211,6 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
                 'color': 'bold'
             },
         ]+[
-
             {
             'if': {
                 'filter_query': '{{{0}}} = "{1}"'.format(col,'TOPE'),
