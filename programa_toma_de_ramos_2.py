@@ -148,7 +148,7 @@ def horario_func(csv,selected_cursos):
         
         return df_combined, tod_prueba, hora_tras , traslape, tit_curso
     
-csv = pd.read_excel('HORARIO ING_202410.xlsx', skiprows=10, header=1)
+csv = pd.read_excel('HORARIO ING 202410.xlsx', skiprows=10, header=1)
 
 def generate_curso_content(i):
     curso_content = html.Div([
