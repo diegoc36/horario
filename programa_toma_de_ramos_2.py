@@ -148,7 +148,7 @@ def horario_func(csv,selected_cursos):
         
         return df_combined, tod_prueba, hora_tras , traslape, tit_curso
     
-csv = pd.read_excel('Horario ING_202320 con salas.xlsx', skiprows=10, header=1)
+csv = pd.read_excel('HORARIO ING_202410.xlsx', skiprows=10, header=1)
 
 def generate_curso_content(i):
     curso_content = html.Div([
@@ -190,6 +190,7 @@ def horario_dash(n_clicks, df_combined, hora_tras, tit_curso):
         html.H3('Horario de Clases'),
         dash_table.DataTable(
             id={'type': 'horario-graph', 'index': n_clicks or 0},
+            
             columns=[{'name': col, 'id': col} for col in columnas],
             data=df_combined.to_dict('records'),
             style_data_conditional=[
