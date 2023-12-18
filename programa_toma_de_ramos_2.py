@@ -55,8 +55,8 @@ def hora(horario):
     return df_combined
 
 def obtener_opciones_curso(csv):
-    cursos = csv[['NRC','TITULO','PROFESOR','PLAN DE ESTUDIOS']].drop_duplicates(subset='NRC').values
-    opciones = [{'label': '{} {} {} {} '.format(curso[0],curso[1],curso[2],curso[3]), 'value': curso[0]} for curso in cursos]
+    cursos = csv[['NRC','TITULO','PROFESOR']].drop_duplicates(subset='NRC').values
+    opciones = [{'label': '{} {} {}'.format(curso[0],curso[1],curso[2]), 'value': curso[0]} for curso in cursos]
     return opciones
 
 
